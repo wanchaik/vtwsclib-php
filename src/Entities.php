@@ -212,12 +212,14 @@ class Entities
      * Retrieves multiple records using module name and a set of constraints
      * @param  string   $moduleName  The name of the module / entity type
      * @param  array    $params  Data used to find matching entries
-     * @return array    $select  The list of fields to select (defaults to SQL-like '*' - all the fields)
-     * @return integer  $limit   Limit the list of entries to N records (acts like LIMIT in SQL)
-     * @return integer  $offset  Integer values to specify the offset of the query
+     * @param  array    $select  The list of fields to select (defaults to SQL-like '*' - all the fields)
+     * @param  integer  $limit   Limit the list of entries to N records (acts like LIMIT in SQL)
+     * @param  integer  $offset  Integer values to specify the offset of the query
+     * @param  array    $orders  Sort the result-set in ascending or descending order
+     * @param  string   $sort    Sort the records in ascending order by default (ASC | DESC)
      * @return array  The array containing matching entries or false if nothing was found
      */
-    public function findMany($moduleName, array $params, array $select = [ ], $limit = 0, $offset = 0)
+    public function findMany($moduleName, array $params, array $select = [ ], $limit = 0, $offset = 0, array $orders = [ ], $sort = 'ASC')
     {
         if (!is_array($params) || (!empty($params) && !is_assoc_array($params))) {
             throw new WSException(
@@ -227,7 +229,7 @@ class Entities
         }
 
         // Builds the query
-        $query = self::getQueryString($moduleName, $params, $select, $limit, $offset);
+        $query = self::getQueryString($moduleName, $params, $select, $limit, $offset, $orders, $sort);
 
         // Run the query
         $records = $this->wsClient->runQuery($query);
@@ -272,12 +274,14 @@ class Entities
      * @static
      * @param  string   $moduleName  The name of the module / entity type
      * @param  array    $params  Data used to find matching entries
-     * @return string   $select  The list of fields to select (defaults to SQL-like '*' - all the fields)
-     * @return integer  $limit   Limit the list of entries to N records (acts like LIMIT in SQL)
-     * @return integer  $offset  Integer values to specify the offset of the query
+     * @param  string   $select  The list of fields to select (defaults to SQL-like '*' - all the fields)
+     * @param  integer  $limit   Limit the list of entries to N records (acts like LIMIT in SQL)
+     * @param  integer  $offset  Integer values to specify the offset of the query
+     * @param  array    $orders  Sort the result-set in ascending or descending order
+     * @param  string   $sort    Sort the records in ascending order by default (ASC | DESC)
      * @return string   The query build out of the supplied parameters
      */
-    public static function getQueryString($moduleName, array $params, array $select = [ ], $limit = 0, $offset = 0)
+    public static function getQueryString($moduleName, array $params, array $select = [ ], $limit = 0, $offset = 0, array $orders = [ ], $sort = 'ASC')
     {
         $criteria = array();
         $select = (empty($select)) ? '*' : implode(',', $select);
@@ -289,6 +293,12 @@ class Entities
             }
 
             $query .= sprintf(' WHERE %s', implode(" AND ", $criteria));
+        }
+
+        if (!empty($orders)) {
+            $query .= ($sort === 'DESC')
+                ? sprintf(' ORDER BY %s DESC', implode(",", $orders))
+                : sprintf(' ORDER BY %s', implode(",", $orders));
         }
 
         if (intval($limit) > 0) {
