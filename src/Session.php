@@ -242,6 +242,32 @@ class Session
                 case 'POST':
                     $response = $this->httpClient->post($this->wsBaseURL, [ 'form_params' => $requestData, 'timeout' => $this->requestTimeout ]);
                     break;
+                case 'MULTIPART':
+                    $multipart = [
+                        [
+                            'name' => 'operation',
+                            'contents' => $requestData['operation'],
+                        ],
+                        [
+                            'name' => 'sessionName',
+                            'contents' => $requestData['sessionName'],
+                        ],
+                        [
+                            'name' => 'elementType',
+                            'contents' => $requestData['elementType'],
+                        ],
+                        [
+                            'name' => 'element',
+                            'contents' => $requestData['element'],
+                        ],
+                        [
+                            'name' => $requestData['elementData']['filename'],
+                            'contents' => $requestData['elementData']['filedata'],
+                        ]
+                    ];
+
+                    $response = $this->httpClient->post($this->wsBaseURL, [ 'multipart' => $multipart, 'timeout' => $this->requestTimeout ]);
+                    break;
                 default:
                     throw new WSException("Unsupported request type {$method}");
             }

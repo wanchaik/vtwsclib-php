@@ -286,7 +286,7 @@ class Entities
         $criteria = array();
         $select = (empty($select)) ? '*' : implode(',', $select);
         $query = sprintf("SELECT %s FROM $moduleName", $select);
-        
+
         if (!empty($params)) {
             foreach ($params as $param => $value) {
                 $criteria[ ] = "{$param} LIKE '{$value}'";
@@ -308,5 +308,33 @@ class Entities
         }
 
         return $query;
+    }
+
+    public function uploadOne($moduleName, array $params, string $filename)
+    {
+        if (!is_assoc_array($params)) {
+            throw new WSException(
+                "You have to specify at least one search parameter (prop => value) 
+                in order to be able to create an entity"
+            );
+        }
+
+        // Assign record to logged in user if not specified
+        if (!isset($params[ 'assigned_user_id' ])) {
+            $currentUser = $this->wsClient->getCurrentUser();
+            $params[ 'assigned_user_id' ] = $currentUser[ 'id' ];
+        }
+
+        $pathinfo = pathinfo($filename);
+        $requestData = [
+            'elementType' => $moduleName,
+            'element'     => json_encode($params),
+            'elementData' => [
+                'filename' => $pathinfo['basename'],
+                'filedata' => fopen($filename, 'r')
+            ]
+        ];
+
+        return $this->wsClient->invokeOperation('create', $requestData, 'MULTIPART');
     }
 }
