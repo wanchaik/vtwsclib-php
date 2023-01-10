@@ -74,7 +74,7 @@ class WSException extends Exception implements IteratorAggregate
      * @link http://php.net/manual/en/iteratoraggregate.getiterator.php
      * @return \Traversable An instance of an object implementing \Traversable
      */
-    public function getIterator()
+    public function getIterator(): \ArrayIterator
     {
         $properties = $this->getAllProperties();
         $iterator = new \ArrayIterator($properties);
